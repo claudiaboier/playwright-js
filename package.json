@@ -8,7 +8,11 @@
   },
   "scripts": {
     "ng": "ng",
-    "start": "ng serve"
+    "start": "ng serve",
+    "pageObjects-chrome": "npx playwright test usePageObjects.spec.ts --project=chromium",
+    "pageObjects-firefox": "npx playwright test usePageObjects.spec.ts --project=firefox",
+    "pageObjects-all-sequential": "npm run pageObjects-chrome npm && run pageObjects-firefox",
+    "pageObjects-all-parallel": "npm run pageObjects-chrome npm & run pageObjects-firefox"
   },
   "dependencies": {
     "@angular/animations": "^14.2.12",
@@ -21,6 +25,7 @@
     "@angular/platform-browser-dynamic": "^14.2.12",
     "@angular/router": "^14.2.12",
     "@asymmetrik/ngx-leaflet": "3.0.1",
+    "@faker-js/faker": "^10.2.0",
     "@nebular/auth": "10.0.0",
     "@nebular/eva-icons": "10.0.0",
     "@nebular/security": "10.0.0",
@@ -71,6 +76,7 @@
     "@types/node": "^12.12.70",
     "codelyzer": "^0.0.28",
     "conventional-changelog-cli": "^2.2.2",
+    "dotenv": "^17.2.4",
     "npm-run-all": "4.0.2",
     "rimraf": "2.6.1",
     "stylelint": "^15.6.0",

@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:4200/')
+    await page.goto('/')
 })
 
-test.describe('Form Layouts page', () => {
+test.describe.only('Form Layouts page', () => {
+    //test.describe.configure({ retries: 2 }) //retries for all tests in this describe block
 
     test.beforeEach(async ({ page }) => {
         await page.getByText('Forms').click()
@@ -12,16 +13,20 @@ test.describe('Form Layouts page', () => {
 
     })
 
-    test('input fields', async ({ page }) => {
+    test('input fields', async ({ page }, testInfo) => {
+        if(testInfo.retry) {
+            //do something
+        }
         await page.locator('#inputEmail1').click();
         await page.locator('#inputEmail1').fill('test@test.com');
         await page.locator('#inputEmail1').clear();
-        await page.locator('#inputEmail1').pressSequentially('test2@test.com', { delay: 500 });
+        //await page.locator('#inputEmail1').pressSequentially('test2@test.com', { delay: 500 });
+        await page.locator('#inputEmail1').pressSequentially('test2@test.com');
 
         //generic assertion
 
         const inputValue = await page.locator('#inputEmail1').inputValue()
-        expect(inputValue).toEqual('test2@test.com')
+        expect(inputValue).toEqual('test2@test.com1')
 
         //locator assertion
 
@@ -160,7 +165,7 @@ test('web tables', async ({ page }) => {
                 ? expect(await page.getByRole('table').textContent())
                     .toContain('No data found')
                 : expect(cellValue).toEqual(age)
- 
+
         }
     }
 })
@@ -172,6 +177,45 @@ test('datepicker', async ({ page }) => {
     const calendarInputField = page.getByPlaceholder('Form Picker')
     await calendarInputField.click()
 
-    await page.locator('[class="day-cell ng-star-inserted"]').getByText('1', {exact: true}).click()
-    await expect(calendarInputField).toHaveValue("Jun 1, 2023")
+    let date = new Date()
+    date.setDate(date.getDate() + 29);
+    const expectedDate = date.getDate().toString()
+    const expectedMonth = date.toLocaleString('default', { month: 'short' })
+    const expectedMonthLong = date.toLocaleString('default', { month: 'long' })
+    const expectedYear = date.getFullYear().toString()
+    const dateToAssert = `${expectedMonth} ${expectedDate}, ${expectedYear}`
+
+    let calendarMonthYear = await page.locator('nb-calendar-view-mode').textContent()
+    const expectedMonthAndYear = `${expectedMonthLong} ${expectedYear}`
+
+    while (calendarMonthYear?.trim() != expectedMonthAndYear) {
+        await page.locator('nb-calendar-pageable-navigation [data-name="chevron-right"]').click()
+        calendarMonthYear = await page.locator('nb-calendar-view-mode').textContent()
+    }
+
+    await page.locator('[class="day-cell ng-star-inserted"]').getByText(expectedDate, { exact: true }).click()
+    await expect(calendarInputField).toHaveValue(dateToAssert)
+})
+
+test('sliders', async ({ page }) => {
+    const tempGauge = page.locator(`[tabtitle="Temperature"] circle`)
+    // await tempGauge.evaluate( circle => {
+    //     circle.setAttribute('cx', '232.630')
+    //     circle.setAttribute('cy', '232.630')
+    // })
+    // await tempGauge.click()
+
+    // Mouse movement
+    const tempBox = page.locator(`[tabtitle="Temperature"] ngx-temperature-dragger`)
+    await tempBox.scrollIntoViewIfNeeded()
+
+    const box = await tempBox.boundingBox()
+    const x = box.x + box.width / 2
+    const y = box.y + box.height / 2
+    await page.mouse.move(x, y);      // 1️⃣ move cursor
+    await page.mouse.down();          // 2️⃣ press mouse button (and HOLD)
+    await page.mouse.move(x + 100, y); // 3️⃣ drag
+    await page.mouse.move(x + 100, y + 100); // 4️⃣ drag more
+    await page.mouse.up()
+    await expect(tempBox).toContainText('30')
 })
